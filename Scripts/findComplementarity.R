@@ -4,6 +4,7 @@ library(readxl)
 library(tidyverse)
 library(biomaRt)
 library(rentrez)
+library(plyranges)
 source('Scripts/complimentarityFunctions.R')
 
 SNORD116_SEQUENCE <- 'TGGATCGATGATGAGTCCCCTATAAAAACATTCCTTGGAAAAGCTGAACAAAATGAGTGAGAACTCATAACGTCATTCTCATCGGAACTGAGGTCCA'
@@ -30,7 +31,7 @@ SYS5_differential <- read_excel('data/peaksAnnoFULL.xlsx', sheet='SYS5_different
 library(TxDb.Hsapiens.UCSC.hg38.knownGene)
 library(GenomicRanges)
 
-mart <- useMart("ensembl", dataset = "hsapiens_gene_ensembl")
+mart <- useMart('ensembl', dataset = 'hsapiens_gene_ensembl')
 
 gene_info <- getBM(attributes = c('hgnc_symbol', 'chromosome_name', 'strand'),
                    filters = 'hgnc_symbol',
@@ -122,6 +123,51 @@ to_export <- data.frame(
 ) %>% 
   mutate(percentMatch = (numberMatches / substringLength) * 100, .after = numberMatches)
 
+
+##########################################################
+#     Cross-reference with other datasets
+##########################################################
+
+### For exons, identify if peak overlaps with diff. exon expression (taking +-200bp from the edges of the exon)
+dex_seq <- read_excel('data/DexSeq_with_coordinates.xlsx')
+
+dexseq_ranges <- as_granges(dex_seq[c('genomicData.seqnames','genomicData.start','genomicData.end','log2fold_PW1_CTRL')],
+                            seqnames = genomicData.seqnames, start = genomicData.start-200, end = genomicData.end+200)
+peaks_ranges <- as_granges(SYS5_differential[c('seqnames','start','end')],
+                           seqnames = seqnames, start = start, end = end)
+
+# get overlap, and filter duplicate rows (keep larger absolute value)
+dex_peaks_overlap <- join_overlap_left(peaks_ranges, dexseq_ranges) %>% 
+  as.data.frame %>% 
+  group_by(seqnames, start, end) %>% 
+  slice_max(order_by = log2fold_PW1_CTRL, n=1) %>% 
+  ungroup()
+
+to_export$log2fold <- dex_peaks_overlap$log2fold_PW1_CTRL
+
+### Check if peaks overlap with a methylation site
+rm_cytosolic <- read_excel('data/RMBase/RMBase_cytosolic.xlsx', skip=1)
+rm_other <- read_excel('data/RMBase/RMBase_Other.xlsx', skip=1)
+rm_hek <- read_excel('data/RMBase/RMBase_HEK.xlsx', skip=1)
+rm_hela <- read_excel('data/RMBase/RMBase_HeLa.xlsx', skip=1)
+rm_pa1 <- read_excel('data/RMBase/RMBase_PA1.xlsx', skip=1)
+
+rmbase_all <- bind_rows(lst(rm_cytosolic, rm_other, rm_hek, rm_hela, rm_pa1), .id='rmBase')
+
+rmbase_ranges <- as_granges(rmbase_all[c('ModChr','ModStart','ModEnd', 'Strand', 'rmBase')], 
+                            seqnames = ModChr, start = ModStart, end = ModEnd, strand = Strand)
+
+rmbase_peaks_overlap <- join_overlap_left(peaks_ranges, rmbase_ranges) %>% 
+  as.data.frame() %>% 
+  group_by(seqnames, start, end) %>% 
+  summarize(rmBase = paste(rmBase, collapse = ', '), .groups = 'drop')
+
+to_export$rmbaseSite <- rmbase_peaks_overlap$rmBase
+
+### For 3' UTR, determine if present in RBA abundance (do I have this file?)
+
+### For promoter....???????
+
 filename = 'data/ase2_to_peaks_complementarity_ALL.csv'
 if(file.exists(filename)){
   print('Warning: File already exists! Will NOT overwrite')
@@ -129,15 +175,6 @@ if(file.exists(filename)){
   write.csv(to_export, filename, row.names=F)
 }
 
-##########################################################
-#     Cross-reference with other datasets
-##########################################################
-
-# For exons, identify if peak overlaps with diff. exon expression (taking +-200bp from the edges of the exon)
-
-# For 3' UTR, determine if present in RBA abundance (do I have this file?)
-
-# For promoter....???????
 
 ##########################################################
 #     Assess complementarity of the ASE sequences with the identified regions with high complementarity with snord116
