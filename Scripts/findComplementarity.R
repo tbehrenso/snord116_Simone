@@ -21,7 +21,7 @@ ase2 <- DNAString(ASE2_SEQUENCE)
 ase2_revcomp <- reverseComplement(ase2)
 
 ### SELECT which sequences to use
-query_sequence <- ase2
+query_sequence <- ase1
 
 SYS5_differential <- read_excel('data/peaksAnnoFULL.xlsx', sheet='SYS5_differential')
 
@@ -174,6 +174,22 @@ if(file.exists(filename)){
 } else {
   write.csv(to_export, filename, row.names=F)
 }
+
+##########################################################
+#     Get a weighted scoring based on position (based on Chen 2007)
+##########################################################
+
+weighted_score_vector <- rep(NA, length(alignment_list))
+
+for(i in seq_along(alignment_list)){
+  query_aligned_sequence <- toString(alignment_list[[i]])           # Need to use toString (or as.character) directly on alignment_list[[i]] to get the full sequence. However, its WAY slower than pattern()
+  subject_aligned_sequence <- as.character(subject(alignment_list[[i]]))
+  
+  weighted_score_vector[i] <- get_weighted_score(query_aligned_sequence, subject_aligned_sequence, weighting = F)
+  
+}
+
+
 
 
 ##########################################################
