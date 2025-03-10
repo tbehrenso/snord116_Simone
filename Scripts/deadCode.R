@@ -16,12 +16,13 @@ if (length(ncbi_result$ids) > 0) {
 
 query <- ase1
 NUCLEOTIDES <- c('A','G','C','T')
+REPS <- 20000
 
-test_scores <- numeric(length=1000)
-test_alignment_list <- vector('list', length = 1000)
+test_scores <- numeric(length=REPS)
+test_alignment_list <- vector('list', length = REPS)
 
-for(i in seq(1,1000)){
-  DNA_sim <- DNAString(paste(sample(NUCLEOTIDES, 17, replace=T), collapse=''))
+for(i in seq(1,REPS)){
+  DNA_sim <- DNAString(paste(sample(NUCLEOTIDES, 300, replace=T), collapse=''))
   test_alignment <- pwalign::pairwiseAlignment(query, DNA_sim, 
                              type = 'global-local', 
                              substitutionMatrix = pwalign::nucleotideSubstitutionMatrix(

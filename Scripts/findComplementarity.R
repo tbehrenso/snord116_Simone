@@ -21,7 +21,7 @@ ase2 <- DNAString(ASE2_SEQUENCE)
 ase2_revcomp <- reverseComplement(ase2)
 
 ### SELECT which sequences to use
-query_sequence <- ase1
+query_sequence <- ase2
 
 SYS5_differential <- read_excel('data/peaksAnnoFULL.xlsx', sheet='SYS5_differential')
 
@@ -168,12 +168,6 @@ to_export$rmbaseSite <- rmbase_peaks_overlap$rmBase
 
 ### For promoter....???????
 
-filename = 'data/ase2_to_peaks_complementarity_ALL.csv'
-if(file.exists(filename)){
-  print('Warning: File already exists! Will NOT overwrite')
-} else {
-  write.csv(to_export, filename, row.names=F)
-}
 
 ##########################################################
 #     Get a weighted scoring based on position (based on Chen 2007)
@@ -185,12 +179,19 @@ for(i in seq_along(alignment_list)){
   query_aligned_sequence <- toString(alignment_list[[i]])           # Need to use toString (or as.character) directly on alignment_list[[i]] to get the full sequence. However, its WAY slower than pattern()
   subject_aligned_sequence <- as.character(subject(alignment_list[[i]]))
   
-  weighted_score_vector[i] <- get_weighted_score(query_aligned_sequence, subject_aligned_sequence, weighting = F)
+  weighted_score_vector[i] <- get_weighted_score(query_aligned_sequence, subject_aligned_sequence)
   
+  if (i%%1000==0){print(paste0('Weighted scoring: alignment #', i))}
 }
 
+to_export$weightedScore <- weighted_score_vector
 
-
+filename = 'data/ase2_to_peaks_complementarity_ALL.csv'
+if(file.exists(filename)){
+  print('Warning: File already exists! Will NOT overwrite')
+} else {
+  write.csv(to_export, filename, row.names=F)
+}
 
 ##########################################################
 #     Assess complementarity of the ASE sequences with the identified regions with high complementarity with snord116

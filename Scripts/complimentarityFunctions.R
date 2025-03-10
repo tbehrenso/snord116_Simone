@@ -27,7 +27,7 @@ get_weighted_score <- function(seq1, seq2, match=2, mismatch=-2, gapOpening=-5, 
   firstGap1 <- T
   firstGap2 <- T
   seq1_position <- 1 # keep track of seq1 position (assumes seq1 is the ASE, so the weighting can work properly)
-  position_weighting <- c(0.3, 0.9, 0.95, 0.99, 1, 0.9, 0.95, 0.95, 0.99, 0.95, 0.9, 0.8, 0.7, 0.45, 0.3, 0.3, 0.3)
+  position_weighting <- rev(c(0.3, 0.9, 0.95, 0.99, 1, 0.9, 0.95, 0.95, 0.99, 0.95, 0.9, 0.8, 0.7, 0.45, 0.3, 0.3, 0.3))
   if(!weighting){position_weighting <- (rep(1, 17))}
   
   # correct for unequal sequence lengths
