@@ -74,7 +74,5 @@ get_weighted_score <- function(seq1, seq2, match=2, mismatch=-2, gapOpening=-5, 
   return(score)
 }
 
-get_weighted_score('CGTCATTCTCATCGGAA', 'CCTGCCTCCCAGCAGCC')
-
-get_weighted_score(seq1,seq2, weighting=F)
+#get_weighted_score('CGTCATTCTCATCGGAA', 'CCTGCCTCCCAGCAGCC')
 

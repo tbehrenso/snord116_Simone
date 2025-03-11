@@ -1,0 +1,3 @@
+../../../../Software/snoGloBe/bin/snoglobe.py --seq --verbose snord116.fa targetIDs.txt target.gtf chromo_dir snoglobe_116
+
+(conda activate snoglobeenv)

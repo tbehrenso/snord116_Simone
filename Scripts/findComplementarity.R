@@ -21,7 +21,7 @@ ase2 <- DNAString(ASE2_SEQUENCE)
 ase2_revcomp <- reverseComplement(ase2)
 
 ### SELECT which sequences to use
-query_sequence <- ase2
+query_sequence <- ase1
 
 SYS5_differential <- read_excel('data/peaksAnnoFULL.xlsx', sheet='SYS5_differential')
 

@@ -95,6 +95,47 @@ if(T){
 }
 
 
+##########################################################
+#     Making files for snoGloBe 
+##########################################################
+# (requries running findComplementarity.R)
+
+# (NOT USING) write target IDs to txt file
+apply(SYS5_differential, 1, print(.$start))
+
+SYS5_differential_snoglobe <- mutate(SYS5_differential, ID = paste0(SYMBOL,': ',start,'-',end))
+
+# (NOT USING) create custom GTF with the peak sequences 
+gene_strands_updated <- gene_strands
+gene_strands_updated[gene_strands_updated == '1'] <- '+'
+gene_strands_updated[gene_strands_updated == '-1'] <- '-'
+gene_strands_updated[is.na(gene_strands_updated)] <- '+'
+
+gtf_dataframe <- data.frame(seqid = SYS5_differential$seqnames,
+                            source = rep('custom', 20510),
+                            type = rep('transcript', 20510),
+                            start = SYS5_differential$start,
+                            end = SYS5_differential$end,
+                            score = rep('.', 20510),
+                            strand = gene_strands_updated,
+                            phase = rep('.', 20510),
+                            attribute = paste0('gene_id "', SYS5_differential_snoglobe$ID, '"; transcript_id "001.1"; gene_biotype "protein_coding";')
+                            )
+
+gtf_dataframe <- gtf_dataframe[rep(seq_len(nrow(gtf_dataframe)), each = 3), ]
+gtf_dataframe$type <- rep(c('gene','transcript','exon'), 20510)
+
+
+write.table(gtf_dataframe, file=file('data/snoGloBe/target.gtf','wb'),sep='\t', row.names = F, col.names = F, quote=F)
+
+# write target IDs to txt file
+
+
+
+
+
+
+
 
 
 
