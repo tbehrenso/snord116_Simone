@@ -143,7 +143,7 @@ dex_peaks_overlap <- join_overlap_left(peaks_ranges, dexseq_ranges) %>%
   slice_max(order_by = log2fold_PW1_CTRL, n=1) %>% 
   ungroup()
 
-to_export$log2fold <- dex_peaks_overlap$log2fold_PW1_CTRL
+to_export$dexseq_log2fold <- dex_peaks_overlap$log2fold_PW1_CTRL
 
 ### Check if peaks overlap with a methylation site
 rm_cytosolic <- read_excel('data/RMBase/RMBase_cytosolic.xlsx', skip=1)
@@ -186,12 +186,99 @@ for(i in seq_along(alignment_list)){
 
 to_export$weightedScore <- weighted_score_vector
 
-filename = 'data/ase2_to_peaks_complementarity_ALL.csv'
+##########################################################
+#     Merge with snoGloBe results
+##########################################################
+
+snoglobe_output <- read.table('data/snoGloBe/snoglobe_116.tsv', sep='\t', header=T)
+
+snoglobe_ranges <- as_granges(snoglobe_output[c('target_chromo','target_window_start','target_window_end','score')],
+                              seqnames = target_chromo, start = target_window_start, end = target_window_end)
+
+# get overlap, and filter duplicate rows (keep larger absolute value)
+snoglobe_peaks_overlap <- join_overlap_left(peaks_ranges, snoglobe_ranges) %>% 
+  as.data.frame %>% 
+  group_by(seqnames, start, end) %>%
+  summarize(score = paste(as.character(score), collapse = ", "), .groups = "drop")
+snoglobe_peaks_overlap_secondary <- join_overlap_left(peaks_ranges, snoglobe_ranges) %>% 
+  as.data.frame %>% 
+  group_by(seqnames, start, end) %>%
+  slice_max(order_by = score, n = 1, with_ties=F) %>%
+  ungroup()
+
+to_export$snoglobeScore <- snoglobe_peaks_overlap$score
+to_export$snoglobeScoreMax <- snoglobe_peaks_overlap_secondary$score
+
+
+# identify genes with three consecutive windows with score above threshold
+snoglobe_output_consecutive <- snoglobe_output %>%
+  group_by(target_id) %>%
+  mutate(
+    high_score = score > 0.98,
+    next1_seq = lead(target_window_start, 1) == target_window_start + 1,
+    next2_seq = lead(target_window_start, 2) == target_window_start + 2,
+    next1_high = lead(high_score, 1, default = FALSE),
+    next2_high = lead(high_score, 2, default = FALSE)
+  ) %>%
+  filter(high_score & next1_high & next2_high & next1_seq & next2_seq)
+
+
+snoglobe_consecutive_windows_ranges <- as_granges(snoglobe_output_consecutive[c('target_chromo','target_window_start','target_window_end','score')],
+                                                  seqnames = target_chromo, start = target_window_start, end = target_window_end)
+snoglobe_peaks_consecutive_windows_overlap <- join_overlap_left(peaks_ranges, snoglobe_consecutive_windows_ranges) %>% 
+  as.data.frame %>% 
+  group_by(seqnames, start, end) %>%
+  summarize(score = paste(as.character(score), collapse = ", "), .groups = "drop")
+
+to_export$snoglobe_consecutiveWindows <- snoglobe_peaks_consecutive_windows_overlap$score
+
+
+filename = 'data/ase1_to_peaks_complementarity_ALL.csv'
+
+
+
+##########################################################
+#     Merge differential expression values
+##########################################################
+degs_up <- read_excel('data/common_DEGS_UP.xlsx')
+degs_down <- read_excel('data/common_DEGS_DOWN.xlsx')
+colnames(degs_up) <- c("Gene_name", "PW1_vs_CTRL.baseMean", "UP_PW1_log2FoldChange", "PW1_vs_CTRL.padj", "PW2_vs_CTRL.baseMean", "UP_PW2_log2FoldChange",
+                       "PW2_vs_CTRL.padj", "PW3_vs_CTRL.baseMean", "UP_PW3_log2FoldChange", "PW3_vs_CTRL.padj")
+colnames(degs_down) <- c("Gene_name", "PW1_vs_CTRL.baseMean", "DOWN_PW1_log2FoldChange", "PW1_vs_CTRL.padj", "PW2_vs_CTRL.baseMean", "DOWN_PW2_log2FoldChange",
+                       "PW2_vs_CTRL.padj", "PW3_vs_CTRL.baseMean", "DOWN_PW3_log2FoldChange", "PW3_vs_CTRL.padj")
+
+
+to_export <- to_export %>% 
+  left_join(degs_up[c('Gene_name','UP_PW1_log2FoldChange','UP_PW2_log2FoldChange','UP_PW3_log2FoldChange')], by=join_by('geneSymbol'=='Gene_name')) %>% 
+  left_join(degs_down[c('Gene_name','DOWN_PW1_log2FoldChange','DOWN_PW2_log2FoldChange','DOWN_PW3_log2FoldChange')], by=join_by('geneSymbol'=='Gene_name'))
+  
+
+
 if(file.exists(filename)){
   print('Warning: File already exists! Will NOT overwrite')
 } else {
   write.csv(to_export, filename, row.names=F)
 }
+
+
+##########################################################
+#     Find overlap with HEK differential peaks
+##########################################################
+
+HEK_differential <- read_excel('data/peaksAnnoFULL.xlsx', sheet='differential_peaks')
+
+consecutive_window_SYS5 <- SYS5_differential[to_export$snoglobe_consecutiveWindows!='NA',]
+
+HEK_ranges <- as_granges(HEK_differential[c('seqnames','start','end', 'fold_enrichment', 'SYMBOL')],
+                            seqnames = seqnames, start = start, end = end)
+consecutive_windows_ranges <- as_granges(consecutive_window_SYS5[c('seqnames','start','end', 'fold_enrichment', 'SYMBOL')],
+                           seqnames = seqnames, start = start, end = end)
+
+
+join_overlap_left(consecutive_windows_ranges, HEK_ranges)
+
+
+
 
 ##########################################################
 #     Assess complementarity of the ASE sequences with the identified regions with high complementarity with snord116
