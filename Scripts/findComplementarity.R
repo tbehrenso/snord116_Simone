@@ -230,7 +230,7 @@ snoglobe_peaks_consecutive_windows_overlap <- join_overlap_left(peaks_ranges, sn
   group_by(seqnames, start, end) %>%
   summarize(score = paste(as.character(score), collapse = ", "), .groups = "drop")
 
-to_export$snoglobe_consecutiveWindows <- snoglobe_peaks_consecutive_windows_overlap$score
+to_export$snoglobe_consecutiveWindows <- snoglobe_peaks_consecutive_windows_overlap
 
 
 filename = 'data/ase1_to_peaks_complementarity_ALL.csv'
@@ -267,7 +267,7 @@ if(file.exists(filename)){
 
 HEK_differential <- read_excel('data/peaksAnnoFULL.xlsx', sheet='differential_peaks')
 
-consecutive_window_SYS5 <- SYS5_differential[to_export$snoglobe_consecutiveWindows!='NA',]
+consecutive_window_SYS5 <- SYS5_differential[to_export$snoglobe_consecutiveWindows$score!='NA',]
 
 HEK_ranges <- as_granges(HEK_differential[c('seqnames','start','end', 'fold_enrichment', 'SYMBOL')],
                             seqnames = seqnames, start = start, end = end)
