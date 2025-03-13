@@ -5,6 +5,8 @@ library(tidyverse)
 library(biomaRt)
 library(rentrez)
 library(plyranges)
+library(TxDb.Hsapiens.UCSC.hg38.knownGene)
+library(GenomicRanges)
 source('Scripts/complimentarityFunctions.R')
 
 SNORD116_SEQUENCE <- 'TGGATCGATGATGAGTCCCCTATAAAAACATTCCTTGGAAAAGCTGAACAAAATGAGTGAGAACTCATAACGTCATTCTCATCGGAACTGAGGTCCA'
@@ -28,8 +30,6 @@ SYS5_differential <- read_excel('data/peaksAnnoFULL.xlsx', sheet='SYS5_different
 ##########################################################
 #     Identify the strand of each gene symbol 
 ##########################################################
-library(TxDb.Hsapiens.UCSC.hg38.knownGene)
-library(GenomicRanges)
 
 mart <- useMart('ensembl', dataset = 'hsapiens_gene_ensembl')
 

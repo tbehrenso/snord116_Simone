@@ -132,8 +132,20 @@ write.table(gtf_dataframe, file=file('data/snoGloBe/target.gtf','wb'),sep='\t', 
 
 
 
+##########################################################
+#     Create bed file (from SYS5_differential)
+##########################################################
+gene_strands_updated <- gene_strands
+gene_strands_updated[gene_strands_updated == '1'] <- '+'
+gene_strands_updated[gene_strands_updated == '-1'] <- '-'
+gene_strands_updated[is.na(gene_strands_updated)] <- '*'
 
 
+bed <- data.frame(chrom = SYS5_differential$seqnames, chromStart=SYS5_differential$start, chromEnd=SYS5_differential$end, strand=gene_strands_updated)
+
+bedgr <- as_granges(bed, seqnames = chrom, start = chromStart, end = chromEnd, strand = strand)
+
+export(bedgr, 'data/snoGloBe/SYS5_diff.bed', 'bed')
 
 
 

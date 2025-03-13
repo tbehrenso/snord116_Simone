@@ -1,3 +1,7 @@
 ../../../../Software/snoGloBe/bin/snoglobe.py --seq --verbose snord116.fa targetIDs.txt target.gtf chromo_dir snoglobe_116
 
 (conda activate snoglobeenv)
+
+
+# updated for subsetted GTF
+../../../../Software/snoGloBe/bin/snoglobe.py --seq --verbose snord116.fa targetIDs.txt ensembl_SYS5subset.gtf chromo_dir snoglobe_116.tsv
