@@ -86,61 +86,136 @@ plotTracks(list(snord116_track, snord116_annotation, strack, snoglobe_interactio
 
 mart <- useMart('ensembl', dataset = 'hsapiens_gene_ensembl')
 
-gene_symbol <- 'TP53'  # Replace with your gene of interest
-genome <- 'hg38'       # Change if using another genome build
+gene_symbol <- 'SMIM29'  
+genome <- 'hg38'     
 
 # Connect to Ensembl (for hg38, use 'GRCh38'; for hg19, use 'GRCh37')
-mart <- useEnsembl(biomart = 'genes', dataset = 'hsapiens_gene_ensembl', GRCh = 38)
+mart <- useEnsembl(biomart = 'genes', dataset = 'hsapiens_gene_ensembl')
 
-# Retrieve gene information (exons, introns, TSS)
-gene_info <- getBM(
-  attributes = c('chromosome_name', 'exon_chrom_start', 'exon_chrom_end', 
-                 'transcript_start', 'transcript_end', 'strand', 'hgnc_symbol'), 
+
+# get attributes in two separate calls (Biomart does not allow calling attributes from different "pages" in the same call)
+# (thanks James W. MacDonald)
+gene_info_a <- getBM(
+  attributes = c('chromosome_name', 'ensembl_transcript_id',
+                 'strand', 'hgnc_symbol'),
   filters = 'hgnc_symbol',
   values = gene_symbol,
-  mart = mart
-)
+  mart = mart)
 
-# Check if gene is found
-if (nrow(gene_info) == 0) {
-  stop('Gene not found in Ensembl. Check the gene symbol and genome assembly.')
-}
+gene_info_b <- getBM(
+  attributes = c('ensembl_transcript_id', '3_utr_start','3_utr_end','transcript_start','transcript_end', 'ensembl_exon_id', 'exon_chrom_start', 'exon_chrom_end'),
+  filters = 'ensembl_transcript_id',
+  values = as.character(gene_info_a[,2]),
+  mart = mart)
+
+gene_info <- merge(gene_info_a, gene_info_b)
+
 
 #  Convert to GRanges for Gviz plotting
 gene_ranges <- GRanges(
   seqnames = paste0('chr', gene_info$chromosome_name),
   ranges = IRanges(start = gene_info$exon_chrom_start, end = gene_info$exon_chrom_end),
-  strand = ifelse(gene_info$strand == 1, '+', '-')
+  strand = ifelse(gene_info$strand == 1, '+', '-'),
+  transcript = gene_info$ensembl_transcript_id,
+  exonID = gene_info$ensembl_exon_id
 )
+
+gene_chromosome <- unique(paste0('chr', gene_info$chromosome_name))
 
 # Create GeneRegionTrack for plotting exons/introns
 geneTrack <- GeneRegionTrack(
   gene_ranges,
   genome = genome,
-  chromosome = unique(paste0('chr', gene_info$chromosome_name)),
+  chromosome = gene_chromosome,
   name = gene_symbol,
-  showId = TRUE,       # Display transcript IDs
-  transcriptAnnotation = 'symbol',  # Show gene symbol
+  #showId = TRUE,
+  #transcriptAnnotation = 'symbol',
   col = 'black',       # Border color
   fill = 'skyblue',    # Exon color
-  stacking = 'full'
+  stacking = 'full',
+  transcript = gene_info$ensembl_transcript_id,
+  exon = gene_info$ensembl_exon_id
 )
 
-#  Get Transcription Start Site (TSS) and add a marker
+
 tss_start <- min(gene_info$transcript_start)  # Take the first transcript TSS
 tssTrack <- AnnotationTrack(
-  start = tss_start, end = tss_start + 1,  # Small mark at TSS
+  start = unique(gene_info$transcript_start), end = unique(gene_info$transcript_start)+1,  # Small mark at TSS
   chromosome = unique(paste0('chr', gene_info$chromosome_name)),
   genome = genome,
   name = 'TSS',
   col = 'red', fill = 'red'
 )
 
+ideogram_track <- IdeogramTrack(genome = genome, chromosome = gene_chromosome)
+
+# Annotation Track for Peak Location
+SYS5_differential <- read_excel('peaksAnno.xlsx', sheet='SYS5_differential')
+HEK_differential <- read_excel('peaksAnno.xlsx', sheet='differential_peaks')
+
+gene_SYS5_peaks <- SYS5_differential[SYS5_differential$SYMBOL == gene_symbol & !is.na(SYS5_differential$SYMBOL),]
+gene_HEK_peaks <- HEK_differential[HEK_differential$SYMBOL == gene_symbol & !is.na(HEK_differential$SYMBOL),]
+
+SYS5_peaks <- GRanges(
+  seqnames = gene_chromosome,
+  ranges = IRanges(
+    start = gene_SYS5_peaks$start,  
+    end = gene_SYS5_peaks$end  
+  )
+)
+HEK_peaks <- GRanges(
+  seqnames = gene_chromosome,
+  ranges = IRanges(
+    start = gene_HEK_peaks$start,  
+    end = gene_HEK_peaks$end  
+  )
+)
+
+SYS5_annotation <- AnnotationTrack(
+  range = SYS5_peaks,
+  genome = genome,
+  chromosome = gene_chromosome,
+  name = 'SYS5 Peaks',
+  col = 'red',
+  fill = 'orange'
+)
+HEK_annotation <- AnnotationTrack(
+  range = HEK_peaks,
+  genome = genome,
+  chromosome = gene_chromosome,
+  name = 'HEK Peaks',
+  col = 'red',
+  fill = '#EB5017'
+)
+
+
+# Annotation Track for snoGloBe interaction
+plot_range_start <- min(gene_info$transcript_start, gene_SYS5_peaks$start, gene_HEK_peaks$start) - 2000
+plot_range_end <- max(gene_info$transcript_end, gene_SYS5_peaks$end, gene_HEK_peaks$end) + 2000
+
+snoglobe_output <- read.table('data/snoGloBe/snoglobe_116.tsv', sep='\t', header=T)
+
+snoglobe_ranges <- as_granges(snoglobe_output[c('target_chromo','target_window_start','target_window_end','score')],
+                              seqnames = target_chromo, start = target_window_start, end = target_window_end)
+
+snoglobe_gene_peaks <- join_overlap_intersect(GRanges(seqnames = gene_chromosome, ranges = IRanges(start = plot_range_start, end = plot_range_end)), snoglobe_ranges) 
+
+snoglobe_annotation <- AnnotationTrack(
+  range = snoglobe_gene_peaks,
+  genome = genome,
+  chromosome = gene_chromosome,
+  name = 'snoGloBe Peaks',
+  col = '#524ACC',
+  fill = '#A19BDE'
+)
+
 #  Plot the gene structure
 plotTracks(
-  list(geneTrack, tssTrack),
-  from = min(gene_info$transcript_start) - 2000,  # Show upstream region
-  to = max(gene_info$transcript_end) + 2000       # Show downstream region
+  list(ideogram_track, geneTrack, tssTrack, SYS5_annotation, HEK_annotation, snoglobe_annotation),
+  from = plot_range_start, 
+  to = plot_range_end,
+  transcriptAnnotation = "transcript"
+  #exonAnnotation = 'exon'
 )
 
 
@@ -149,23 +224,17 @@ plotTracks(
 
 
 
+#### (not used)
+# but can auto-plot BioMart tracks?
+afrom <- 2960000
+ato <- 3160000
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+bmt <- BiomartGeneRegionTrack(genome = "hg38", chromosome = "chr12",
+                              start = afrom, end = ato,
+                              filter = list(with_ox_refseq_mrna = TRUE),
+                              stacking = "dense")
+plotTracks(bmt, from = afrom, to = ato, 
+           chromosome = "chr12")
 
 
 
