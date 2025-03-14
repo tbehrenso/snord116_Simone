@@ -86,11 +86,11 @@ plotTracks(list(snord116_track, snord116_annotation, strack, snoglobe_interactio
 
 mart <- useMart('ensembl', dataset = 'hsapiens_gene_ensembl')
 
-gene_symbol <- 'SMIM29'  
-genome <- 'hg38'     
-
 # Connect to Ensembl (for hg38, use 'GRCh38'; for hg19, use 'GRCh37')
 mart <- useEnsembl(biomart = 'genes', dataset = 'hsapiens_gene_ensembl')
+
+gene_symbol <- 'NCL'  
+genome <- 'hg38'     
 
 
 # get attributes in two separate calls (Biomart does not allow calling attributes from different "pages" in the same call)
@@ -153,45 +153,64 @@ ideogram_track <- IdeogramTrack(genome = genome, chromosome = gene_chromosome)
 SYS5_differential <- read_excel('peaksAnno.xlsx', sheet='SYS5_differential')
 HEK_differential <- read_excel('peaksAnno.xlsx', sheet='differential_peaks')
 
-gene_SYS5_peaks <- SYS5_differential[SYS5_differential$SYMBOL == gene_symbol & !is.na(SYS5_differential$SYMBOL),]
-gene_HEK_peaks <- HEK_differential[HEK_differential$SYMBOL == gene_symbol & !is.na(HEK_differential$SYMBOL),]
-
-SYS5_peaks <- GRanges(
-  seqnames = gene_chromosome,
-  ranges = IRanges(
-    start = gene_SYS5_peaks$start,  
-    end = gene_SYS5_peaks$end  
+if(gene_symbol %in% SYS5_differential$SYMBOL){
+  
+  gene_SYS5_peaks <- SYS5_differential[SYS5_differential$SYMBOL == gene_symbol & !is.na(SYS5_differential$SYMBOL),]
+  
+  SYS5_peaks <- GRanges(
+    seqnames = gene_chromosome,
+    ranges = IRanges(
+      start = gene_SYS5_peaks$start,  
+      end = gene_SYS5_peaks$end  
+    )
   )
-)
-HEK_peaks <- GRanges(
-  seqnames = gene_chromosome,
-  ranges = IRanges(
-    start = gene_HEK_peaks$start,  
-    end = gene_HEK_peaks$end  
+  SYS5_annotation <- AnnotationTrack(
+    range = SYS5_peaks,
+    genome = genome,
+    chromosome = gene_chromosome,
+    name = 'SYS5 Peaks',
+    col = 'red',
+    fill = 'orange'
   )
-)
+} else {
+  gene_SYS5_peaks <- NA
+  SYS5_annotation <- NA
+  print(paste0(gene_symbol, ' not in SYS5 peaks'))
+}
 
-SYS5_annotation <- AnnotationTrack(
-  range = SYS5_peaks,
-  genome = genome,
-  chromosome = gene_chromosome,
-  name = 'SYS5 Peaks',
-  col = 'red',
-  fill = 'orange'
-)
-HEK_annotation <- AnnotationTrack(
-  range = HEK_peaks,
-  genome = genome,
-  chromosome = gene_chromosome,
-  name = 'HEK Peaks',
-  col = 'red',
-  fill = '#EB5017'
-)
+
+if(gene_symbol %in% HEK_differential$SYMBOL){
+  
+  gene_HEK_peaks <- HEK_differential[HEK_differential$SYMBOL == gene_symbol & !is.na(HEK_differential$SYMBOL),]
+  
+  HEK_peaks <- GRanges(
+    seqnames = gene_chromosome,
+    ranges = IRanges(
+      start = gene_HEK_peaks$start,  
+      end = gene_HEK_peaks$end  
+    )
+  )
+  HEK_annotation <- AnnotationTrack(
+    range = HEK_peaks,
+    genome = genome,
+    chromosome = gene_chromosome,
+    name = 'HEK Peaks',
+    col = 'red',
+    fill = '#EB5017'
+  )
+} else {
+  gene_HEK_peaks <- NA
+  HEK_annotation <- NA
+  print(paste0(gene_symbol, ' not in HEK peaks'))
+}
 
 
 # Annotation Track for snoGloBe interaction
-plot_range_start <- min(gene_info$transcript_start, gene_SYS5_peaks$start, gene_HEK_peaks$start) - 2000
-plot_range_end <- max(gene_info$transcript_end, gene_SYS5_peaks$end, gene_HEK_peaks$end) + 2000
+all_starts <- c(gene_info$transcript_start, if(any(!is.na(gene_SYS5_peaks))){gene_SYS5_peaks$start}, if(any(!is.na(gene_HEK_peaks))){gene_HEK_peaks$start})
+all_ends <- c(gene_info$transcript_end, if(any(!is.na(gene_SYS5_peaks))){gene_SYS5_peaks$end}, if(any(!is.na(gene_HEK_peaks))){gene_HEK_peaks$end})
+
+plot_range_start <- min(all_starts) - 2000
+plot_range_end <- max(all_ends) + 2000
 
 snoglobe_output <- read.table('data/snoGloBe/snoglobe_116.tsv', sep='\t', header=T)
 
@@ -209,9 +228,42 @@ snoglobe_annotation <- AnnotationTrack(
   fill = '#A19BDE'
 )
 
+# finalize track_list (ie. remove NAs)
 #  Plot the gene structure
+track_list <- list(geneTrack, SYS5_annotation, HEK_annotation, snoglobe_annotation)
+track_list <- track_list[!is.na(track_list)]
+
+
+# Highlight track to emphasize three consecutive high-scoring windows
+snoglobe_output_consecutive <- snoglobe_output %>%
+  group_by(target_id) %>%
+  mutate(
+    high_score = score > 0.98,
+    next1_seq = lead(target_window_start, 1) == target_window_start + 1,
+    next2_seq = lead(target_window_start, 2) == target_window_start + 2,
+    next1_high = lead(high_score, 1, default = FALSE),
+    next2_high = lead(high_score, 2, default = FALSE)
+  ) %>%
+  filter(high_score & next1_high & next2_high & next1_seq & next2_seq)
+
+
+snoglobe_consecutive_windows_ranges <- as_granges(snoglobe_output_consecutive[c('target_chromo','target_window_start','target_window_end','score')],
+                                                  seqnames = target_chromo, start = target_window_start, end = target_window_end)
+
+snoglobe_consecutive_peaks <- join_overlap_intersect(GRanges(seqnames = gene_chromosome, ranges = IRanges(start = plot_range_start, end = plot_range_end)), 
+                                                     snoglobe_consecutive_windows_ranges)
+# make wider so its visible
+snoglobe_consecutive_peaks <- flank(snoglobe_consecutive_peaks, 2, both=T)
+
+consecutive_window_highlight <- HighlightTrack(trackList = track_list, 
+                                               range = snoglobe_consecutive_peaks,
+                                               chromosome = gene_chromosome,
+                                               col = 'red'
+                                               )
+
+
 plotTracks(
-  list(ideogram_track, geneTrack, tssTrack, SYS5_annotation, HEK_annotation, snoglobe_annotation),
+  append(ideogram_track, consecutive_window_highlight),
   from = plot_range_start, 
   to = plot_range_end,
   transcriptAnnotation = "transcript"
