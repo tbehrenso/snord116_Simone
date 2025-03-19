@@ -149,6 +149,12 @@ export(bedgr, 'data/snoGloBe/SYS5_diff.bed', 'bed')
 
 
 
+##########################################################
+#     Read and modify Dexseq counts from cluster
+##########################################################
+
+EDO_1 <- read.table('data/EDO_1.dexeq_counts', sep = '\t')
+
 
 
 

@@ -17,10 +17,11 @@ SYS5_differential <- read_excel('peaksAnno.xlsx', sheet='SYS5_differential')
 # change annotations to group all that represent promoters, exons, and introns
 SYS5_differential <- SYS5_differential %>% 
   mutate(annotation_category = case_when(
-    startsWith(annotation, 'Exon') & distanceToTSS >= 0 ~ 'Exon',
-    startsWith(annotation, 'Intron') & distanceToTSS >= 0 ~ 'Intron',
+    startsWith(annotation, 'Exon') & distanceToTSS >= 0 ~ 'Exon/Intron',
+    startsWith(annotation, 'Intron') & distanceToTSS >= 0 ~ 'Exon/Intron',
     startsWith(annotation, 'Promoter') ~ 'Promoter',
     startsWith(annotation, "5'") ~ "5' UTR",
+    startsWith(annotation, "3'") ~ "3' UTR",
     TRUE ~ 'Intergenic'
   ))
 
@@ -37,7 +38,8 @@ ggplot(SYS5_diff_table, aes(x="", y=Freq, fill=Var1,label = absolute_label)) +
   theme_void() +
   geom_label_repel(aes(), 
              size = 5,
-             position = position_stack(vjust = .2),
+             position = position_stack(vjust = .3),
              show.legend = FALSE) +
   scale_fill_discrete(name = 'Annotation') +
-  ggtitle('Frequency of Annotation Types for Peaks')
+  ggtitle('Frequency of Annotation Types for SHSY Peaks')
+

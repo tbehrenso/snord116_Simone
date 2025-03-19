@@ -233,8 +233,6 @@ snoglobe_peaks_consecutive_windows_overlap <- join_overlap_left(peaks_ranges, sn
 to_export$snoglobe_consecutiveWindows <- snoglobe_peaks_consecutive_windows_overlap
 
 
-filename = 'data/ase1_to_peaks_complementarity_ALL.csv'
-
 
 
 ##########################################################
@@ -251,8 +249,10 @@ colnames(degs_down) <- c("Gene_name", "PW1_vs_CTRL.baseMean", "DOWN_PW1_log2Fold
 to_export <- to_export %>% 
   left_join(degs_up[c('Gene_name','UP_PW1_log2FoldChange','UP_PW2_log2FoldChange','UP_PW3_log2FoldChange')], by=join_by('geneSymbol'=='Gene_name')) %>% 
   left_join(degs_down[c('Gene_name','DOWN_PW1_log2FoldChange','DOWN_PW2_log2FoldChange','DOWN_PW3_log2FoldChange')], by=join_by('geneSymbol'=='Gene_name'))
-  
 
+
+  
+filename = 'data/ase1_to_peaks_complementarity_ALL.csv'
 
 if(file.exists(filename)){
   print('Warning: File already exists! Will NOT overwrite')
@@ -265,17 +265,20 @@ if(file.exists(filename)){
 #     Find overlap with HEK differential peaks
 ##########################################################
 
-HEK_differential <- read_excel('data/peaksAnnoFULL.xlsx', sheet='differential_peaks')
-
-consecutive_window_SYS5 <- SYS5_differential[to_export$snoglobe_consecutiveWindows$score!='NA',]
-
-HEK_ranges <- as_granges(HEK_differential[c('seqnames','start','end', 'fold_enrichment', 'SYMBOL')],
-                            seqnames = seqnames, start = start, end = end)
-consecutive_windows_ranges <- as_granges(consecutive_window_SYS5[c('seqnames','start','end', 'fold_enrichment', 'SYMBOL')],
+if(F){
+  HEK_differential <- read_excel('data/peaksAnnoFULL.xlsx', sheet='differential_peaks')
+  
+  consecutive_window_SYS5 <- SYS5_differential[to_export$snoglobe_consecutiveWindows$score!='NA',]
+  
+  HEK_ranges <- as_granges(HEK_differential[c('seqnames','start','end', 'fold_enrichment', 'SYMBOL')],
                            seqnames = seqnames, start = start, end = end)
+  consecutive_windows_ranges <- as_granges(consecutive_window_SYS5[c('seqnames','start','end', 'fold_enrichment', 'SYMBOL')],
+                                           seqnames = seqnames, start = start, end = end)
+  
+  
+  join_overlap_left(consecutive_windows_ranges, HEK_ranges)
+}
 
-
-join_overlap_left(consecutive_windows_ranges, HEK_ranges)
 
 
 

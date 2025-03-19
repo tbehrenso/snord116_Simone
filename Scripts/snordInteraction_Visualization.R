@@ -1,5 +1,9 @@
 library(Gviz)
 library(GenomicRanges)
+library(biomaRt)
+library(readxl)
+library(plyranges)
+library(tidyverse)
 library(BSgenome.Hsapiens.UCSC.hg38)
 
 ##########################################################
@@ -86,10 +90,10 @@ plotTracks(list(snord116_track, snord116_annotation, strack, snoglobe_interactio
 
 mart <- useMart('ensembl', dataset = 'hsapiens_gene_ensembl')
 
-# Connect to Ensembl (for hg38, use 'GRCh38'; for hg19, use 'GRCh37')
+# Connect to Ensembl
 mart <- useEnsembl(biomart = 'genes', dataset = 'hsapiens_gene_ensembl')
 
-gene_symbol <- 'NCL'  
+gene_symbol <- 'GIT1'  
 genome <- 'hg38'     
 
 
