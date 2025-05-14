@@ -5,3 +5,8 @@
 
 # updated for subsetted GTF
 ../../../../Software/snoGloBe/bin/snoglobe.py --seq --verbose snord116.fa targetIDs.txt ensembl_SYS5subset.gtf chromo_dir snoglobe_116.tsv
+
+
+
+# on cluster (for ALL genes)
+../../../../Software/snoGloBe/bin/snoglobe.py --seq --verbose snord116.fa targetIDs.txt ../../ric.broccoli/PW_RNA_seq_deep/gencode.v31.basic.annotation.gtf chromo_dir snoglobe_116.tsv

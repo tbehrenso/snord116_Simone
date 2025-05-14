@@ -37,9 +37,10 @@ ggplot(SYS5_diff_table, aes(x="", y=Freq, fill=Var1,label = absolute_label)) +
   coord_polar("y", start=0) +
   theme_void() +
   geom_label_repel(aes(), 
-             size = 5,
+             size = 10,
              position = position_stack(vjust = .3),
              show.legend = FALSE) +
   scale_fill_discrete(name = 'Annotation') +
-  ggtitle('Frequency of Annotation Types for SHSY Peaks')
+  ggtitle('Frequency of Annotation Types for SHSY Peaks') +
+  scale_fill_brewer(palette="Set2")
 

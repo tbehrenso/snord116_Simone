@@ -157,6 +157,62 @@ EDO_1 <- read.table('data/EDO_1.dexeq_counts', sep = '\t')
 
 
 
+##########################################################
+#     Barplot of top fold-enrichment peaks
+##########################################################
+
+SYS5_differential <- read_excel('peaksAnno.xlsx', sheet='SYS5_differential')
+
+SYS5_reduced <- SYS5_differential[,c('SYMBOL','fold_enrichment')][1:30,]
+
+SYS5_reduced$Class <- NA
+
+SYS5_reduced$Class <- c('SNORD116','Protein-Coding','Protein-Coding','Protein-Coding','SCARNA','SNORD','Protein-Coding','RNA', 'snRNA', 'Protein-Coding',
+                        'snRNA', 'Protein-Coding', 'SCARNA', 'Protein-Coding', 'Protein-Coding', 'SNORD', 'Protein-Coding', 'Protein-Coding', 'Protein-Coding', 'snRNA',
+                        'SNORA','Protein-Coding','Protein-Coding','SNORA','SNORA','snRNA','Protein-Coding','snRNA','RNA','snRNA')
+SYS5_reduced <- SYS5_reduced %>% 
+  mutate(SYMBOL = make.unique(as.character(SYS5_reduced$SYMBOL)))
+
+# convert to ordered factor so ggplot doesn't sort x-values)
+SYS5_reduced$SYMBOL <- factor(SYS5_reduced$SYMBOL, levels = rev(SYS5_reduced$SYMBOL))
+
+
+ggplot(data = SYS5_reduced, aes(x=SYMBOL, y=fold_enrichment, fill=Class)) +
+  geom_bar(stat='identity') +
+  coord_flip() +
+  scale_fill_manual(values=c('darkgrey','#5B8496','#44B76B','#86ff37','#eac62d','#f76d1b','pink'))+
+  theme_bw() +
+  xlab('Gene Symbol') + ylab('Fold Enrichment') +
+  labs(color='NEW LEGEND TITLE')
+
+
+
+##########################################################
+#     Subset GTF for overlapping with peaks, for TSRexploreR
+##########################################################
+library(readxl)
+
+# Create bed file for using bedtools
+SYS5_differential <- read_excel('peaksAnno.xlsx', sheet='SYS5_differential')
+
+peak_regions <- as.data.frame(SYS5_differential[c('seqnames','start','end')])
+
+
+
+write.table(peak_regions, file = 'peaksToIntersect.bed', quote=F, col.names = F, row.names = F, sep='\t')
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

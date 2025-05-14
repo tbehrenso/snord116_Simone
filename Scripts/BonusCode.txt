@@ -1,0 +1,13 @@
+# Extract TSSs from GTF
+
+awk 'BEGIN{OFS="\t"}
+     $3=="transcript" {
+       match($0, /transcript_id "([^"]+)"/, a);
+       match($0, /gene_id "([^"]+)"/, g);
+       tid=a[1]; gid=g[1];
+       if ($7 == "+") {
+         print gid, tid, $1, $4, $4, $7;
+       } else if ($7 == "-") {
+         print gid, tid, $1, $5, $5, $7;
+       }
+     }' gencode.v48.basic.annotation.gtf | head

@@ -238,26 +238,51 @@ to_export$snoglobe_consecutiveWindows <- snoglobe_peaks_consecutive_windows_over
 ##########################################################
 #     Merge differential expression values
 ##########################################################
-degs_up <- read_excel('data/common_DEGS_UP.xlsx')
-degs_down <- read_excel('data/common_DEGS_DOWN.xlsx')
-colnames(degs_up) <- c("Gene_name", "PW1_vs_CTRL.baseMean", "UP_PW1_log2FoldChange", "PW1_vs_CTRL.padj", "PW2_vs_CTRL.baseMean", "UP_PW2_log2FoldChange",
-                       "PW2_vs_CTRL.padj", "PW3_vs_CTRL.baseMean", "UP_PW3_log2FoldChange", "PW3_vs_CTRL.padj")
-colnames(degs_down) <- c("Gene_name", "PW1_vs_CTRL.baseMean", "DOWN_PW1_log2FoldChange", "PW1_vs_CTRL.padj", "PW2_vs_CTRL.baseMean", "DOWN_PW2_log2FoldChange",
-                       "PW2_vs_CTRL.padj", "PW3_vs_CTRL.baseMean", "DOWN_PW3_log2FoldChange", "PW3_vs_CTRL.padj")
+
+# degs_up_filtered <- read_excel('data/common_DEGS_UP.xlsx')
+# degs_down_filtered <- read_excel('data/common_DEGS_DOWN.xlsx')
+# colnames(degs_up) <- c("Gene_name", "PW1_vs_CTRL.baseMean", "UP_PW1_log2FoldChange", "PW1_vs_CTRL.padj", "PW2_vs_CTRL.baseMean", "UP_PW2_log2FoldChange",
+#                        "PW2_vs_CTRL.padj", "PW3_vs_CTRL.baseMean", "UP_PW3_log2FoldChange", "PW3_vs_CTRL.padj")
+# colnames(degs_down) <- c("Gene_name", "PW1_vs_CTRL.baseMean", "DOWN_PW1_log2FoldChange", "PW1_vs_CTRL.padj", "PW2_vs_CTRL.baseMean", "DOWN_PW2_log2FoldChange",
+#                        "PW2_vs_CTRL.padj", "PW3_vs_CTRL.baseMean", "DOWN_PW3_log2FoldChange", "PW3_vs_CTRL.padj")
+# 
+# 
+# to_export <- to_export %>% 
+#   left_join(degs_up[c('Gene_name','UP_PW1_log2FoldChange','UP_PW2_log2FoldChange','UP_PW3_log2FoldChange')], by=join_by('geneSymbol'=='Gene_name')) %>% 
+#   left_join(degs_down[c('Gene_name','DOWN_PW1_log2FoldChange','DOWN_PW2_log2FoldChange','DOWN_PW3_log2FoldChange')], by=join_by('geneSymbol'=='Gene_name'))
+
+
+
+degs_up_PW1 <- read_excel('data/GENE_UP 2.xlsx', sheet='PW1_vs_CTRL')
+degs_up_PW2 <- read_excel('data/GENE_UP 2.xlsx', sheet='PW2_vs_CTRL')
+degs_up_PW3 <- read_excel('data/GENE_UP 2.xlsx', sheet='PW3_vs_CTRL')
+degs_down_PW1 <- read_excel('data/GENE_DOWN 2.xlsx', sheet='PW1_vs_CTRL')
+degs_down_PW2 <- read_excel('data/GENE_DOWN 2.xlsx', sheet='PW2_vs_CTRL')
+degs_down_PW3 <- read_excel('data/GENE_DOWN 2.xlsx', sheet='PW3_vs_CTRL')
+
 
 
 to_export <- to_export %>% 
-  left_join(degs_up[c('Gene_name','UP_PW1_log2FoldChange','UP_PW2_log2FoldChange','UP_PW3_log2FoldChange')], by=join_by('geneSymbol'=='Gene_name')) %>% 
-  left_join(degs_down[c('Gene_name','DOWN_PW1_log2FoldChange','DOWN_PW2_log2FoldChange','DOWN_PW3_log2FoldChange')], by=join_by('geneSymbol'=='Gene_name'))
+  left_join(degs_up_PW1[c('Gene_name','padj')], by = join_by('geneSymbol'=='Gene_name')) %>% 
+  rename_with(~ 'DEG_UP_PW1_padj', padj) %>% 
+  left_join(degs_up_PW2[c('Gene_name','padj')], by = join_by('geneSymbol'=='Gene_name')) %>% 
+  rename_with(~ 'DEG_UP_PW2_padj', padj) %>% 
+  left_join(degs_up_PW3[c('Gene_name','padj')], by = join_by('geneSymbol'=='Gene_name')) %>% 
+  rename_with(~ 'DEG_UP_PW3_padj', padj) %>% 
+  left_join(degs_down_PW1[c('Gene_name','padj')], by = join_by('geneSymbol'=='Gene_name')) %>% 
+  rename_with(~ 'DEG_DOWN_PW1_padj', padj) %>% 
+  left_join(degs_down_PW2[c('Gene_name','padj')], by = join_by('geneSymbol'=='Gene_name')) %>% 
+  rename_with(~ 'DEG_DOWN_PW2_padj', padj) %>% 
+  left_join(degs_down_PW3[c('Gene_name','padj')], by = join_by('geneSymbol'=='Gene_name')) %>% 
+  rename_with(~ 'DEG_DOWN_PW3_padj', padj)
 
 
-  
-filename = 'data/ase1_to_peaks_complementarity_ALL.csv'
+filename = 'data/ase1_to_peaks_complementarity_ALL.tsv'
 
 if(file.exists(filename)){
   print('Warning: File already exists! Will NOT overwrite')
 } else {
-  write.csv(to_export, filename, row.names=F)
+  write.table(to_export, filename, row.names=F, sep='\t')
 }
 
 

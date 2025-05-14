@@ -1,6 +1,7 @@
 *.xlsx
 *.csv
-
+*.jpg
+*.bed
 
 data/*
 DEXSeqReport/*
