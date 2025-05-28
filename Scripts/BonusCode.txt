@@ -11,3 +11,64 @@ awk 'BEGIN{OFS="\t"}
          print gid, tid, $1, $5, $5, $7;
        }
      }' gencode.v48.basic.annotation.gtf | head
+
+# Extract TSSs from GTF (using first exon)
+
+awk 'BEGIN{OFS="\t"}
+     $3=="exon" && $0 ~ /exon_number 1;/ {
+       match($0, /transcript_id "([^"]+)"/, a);
+       match($0, /gene_id "([^"]+)"/, g);
+       tid=a[1]; gid=g[1];
+       if ($7 == "+") {
+         print gid"_"tid, $1, $4, $4, $7;
+       } else if ($7 == "-") {
+         print gid"_"tid, $1, $5, $5, $7;
+       }
+     }' gencode.v48.basic.annotation.gtf | head
+
+
+# Extend out 1000b before start of transcript
+
+awk 'BEGIN{OFS="\t"; print "GeneID","Chr","Start","End","Strand"}
+{
+    gene_id = $1;
+    chr = $2;
+    strand = $5;
+
+    if (strand == "+") {
+        tss = $3;
+        start = tss - 1000;
+        end = tss;
+    } else if (strand == "-") {
+        tss = $4;
+        start = tss;
+        end = tss + 1000;
+    }
+
+    if (start < 1) start = 1;
+
+    print gene_id, chr, start, end, strand;
+}' gencode_TSSs.saf > gencode_TSSextended.saf
+
+
+# From gencode transcript Fasta, extract only entries corresponding to a list of genes of interest
+
+awk '
+BEGIN {
+    # Load gene IDs (without version) into a lookup table
+    while ((getline < "genes_of_interest.txt") > 0) {
+        goi[$1] = 1;
+    }
+}
+{
+    if ($0 ~ /^>/) {
+        split($0, a, "|");
+        split(a[2], gid, ".");         # a[2] is the ENSG ID; split at "."
+        gene_id = gid[1];              # use only the part before the dot
+        keep = (gene_id in goi);      # check if gene ID is in goi.txt
+    }
+    if (keep) {
+        print $0;
+    }
+}
+' /beegfs/scratch/ric.broccoli/behrens.thomas/reference/gencode.v48.transcripts.fa > transcripts_for_peakGenes.fasta
