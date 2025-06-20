@@ -10,6 +10,11 @@ library(BSgenome.Hsapiens.UCSC.hg38)
 #     Plot snoGloBe interaction frequency across snord116
 ##########################################################
 
+snoglobe_output <- read.table('data/snoGloBe/snoglobe_116.tsv', sep='\t', header=T)
+SNORD116_SEQUENCE <- 'TGGATCGATGATGAGTCCCCTATAAAAACATTCCTTGGAAAAGCTGAACAAAATGAGTGAGAACTCATAACGTCATTCTCATCGGAACTGAGGTCCA'
+ASE1_SEQUENCE <- 'AACATTCCTTGGAAAAG'
+ASE2_SEQUENCE <- 'CGTCATTCTCATCGGAA'
+
 snord116_track <- GenomeAxisTrack(
   range = GRanges(seqnames = 'chr15',IRanges(start=25051476, end=25051572)), 
   genome = 'hg38',
@@ -93,9 +98,8 @@ mart <- useMart('ensembl', dataset = 'hsapiens_gene_ensembl')
 # Connect to Ensembl
 mart <- useEnsembl(biomart = 'genes', dataset = 'hsapiens_gene_ensembl')
 
-gene_symbol <- 'GIT1'  
+gene_symbol <- 'KLF13'  
 genome <- 'hg38'     
-
 
 # get attributes in two separate calls (Biomart does not allow calling attributes from different "pages" in the same call)
 # (thanks James W. MacDonald)
@@ -266,6 +270,7 @@ consecutive_window_highlight <- HighlightTrack(trackList = track_list,
                                                )
 
 
+
 plotTracks(
   append(ideogram_track, consecutive_window_highlight),
   from = plot_range_start, 
@@ -273,10 +278,6 @@ plotTracks(
   transcriptAnnotation = "transcript"
   #exonAnnotation = 'exon'
 )
-
-
-
-
 
 
 
@@ -294,9 +295,15 @@ plotTracks(bmt, from = afrom, to = ato,
 
 
 
-
-
-
+# temp for adding miRNAs to as additional track
+mirnaTrack <- AnnotationTrack(
+  range = mirna_ranges[2:4],
+  genome = genome,
+  chromosome = gene_chromosome,
+  name = 'miRNAs',
+  col = '#524ACC',
+  fill = '#A19BDE'
+)
 
 
 

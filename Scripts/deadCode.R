@@ -203,9 +203,27 @@ write.table(peak_regions, file = 'peaksToIntersect.bed', quote=F, col.names = F,
 
 
 
+##########################################################
+#     Create custom range plot
+##########################################################
 
+data <- tibble::tribble(~Feature, ~Start, ~End,
+                        "SYS5 Peak 1", 31374322, 31375855,
+                        "miR-296-5p", 31374561,  31374567,
+                        "miR-616-3p", 31374694,  31374701,
+                        "miR-3194-5p",  31374943,  31374949,
+                        "3'UTR",31372300,31377899
+)
+#data$Feature <- fct_reorder(data$Education, data$Women, .desc = TRUE)
 
-
+data %>%
+  ggplot(aes(x = Feature)) +
+  geom_linerange(aes(ymin = Start, ymax = End, x = Feature),
+                 size = 1.5, alpha = 0.25) +
+  coord_flip() +
+  ylab("Coordinate") +
+  theme_bw(base_size = 16) +
+  theme(axis.title.y = element_blank())
 
 
 

@@ -2,9 +2,13 @@
 *.csv
 *.jpg
 *.bed
+*.RData
+*.pptx
+
 
 data/*
 DEXSeqReport/*
 Results/*
+dexseq_counts/*
 .Rproj.user/
 .Rhistory
