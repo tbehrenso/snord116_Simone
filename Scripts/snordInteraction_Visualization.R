@@ -98,7 +98,7 @@ mart <- useMart('ensembl', dataset = 'hsapiens_gene_ensembl')
 # Connect to Ensembl
 mart <- useEnsembl(biomart = 'genes', dataset = 'hsapiens_gene_ensembl')
 
-gene_symbol <- 'KLF13'  
+gene_symbol <- 'RNU5B-1'  
 genome <- 'hg38'     
 
 # get attributes in two separate calls (Biomart does not allow calling attributes from different "pages" in the same call)

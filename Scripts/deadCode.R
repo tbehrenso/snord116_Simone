@@ -226,6 +226,62 @@ data %>%
   theme(axis.title.y = element_blank())
 
 
+##########################################################
+#     Percent of pulldown genes differentially expressed in ALL 3 patients 
+##########################################################
+library(readxl)
+
+pulldown_table <- read.csv('/Users/tbehr/Desktop/ase1_excel_updated.csv')
+
+geneup2_PW1 <- read_xlsx('data/GENE_UP 2.xlsx', sheet = 'PW1_vs_CTRL')
+geneup2_PW2 <- read_xlsx('data/GENE_UP 2.xlsx', sheet = 'PW2_vs_CTRL')
+geneup2_PW3 <- read_xlsx('data/GENE_UP 2.xlsx', sheet = 'PW3_vs_CTRL')
+
+genedown2_PW1 <- read_xlsx('data/GENE_DOWN 2.xlsx', sheet = 'PW1_vs_CTRL')
+genedown2_PW2 <- read_xlsx('data/GENE_DOWN 2.xlsx', sheet = 'PW2_vs_CTRL')
+genedown2_PW3 <- read_xlsx('data/GENE_DOWN 2.xlsx', sheet = 'PW3_vs_CTRL')
+
+upreg_PW1_all <- geneup2_PW1$Gene_name[geneup2_PW1$padj < 0.05] %>% na.exclude() %>% unique()
+upreg_PW2_all <- geneup2_PW2$Gene_name[geneup2_PW2$padj < 0.05] %>% na.exclude() %>% unique()
+upreg_PW3_all <- geneup2_PW3$Gene_name[geneup2_PW3$padj < 0.05] %>% na.exclude() %>% unique()
+
+downreg_PW1_all <- genedown2_PW1$Gene_name[genedown2_PW1$padj < 0.05] %>% na.exclude() %>% unique()
+downreg_PW2_all <- genedown2_PW2$Gene_name[genedown2_PW2$padj < 0.05] %>% na.exclude() %>% unique()
+downreg_PW3_all <- genedown2_PW3$Gene_name[genedown2_PW3$padj < 0.05] %>% na.exclude() %>% unique()
+
+upreg_all3 <- pulldown_table$geneSymbol[pulldown_table$DEG_UP_PW1_padj < 0.05 & pulldown_table$DEG_UP_PW2_padj < 0.05 & pulldown_table$DEG_UP_PW3_padj < 0.05] %>% na.exclude() %>% unique()
+upreg_PW1 <- pulldown_table$geneSymbol[pulldown_table$DEG_UP_PW1_padj < 0.05] %>% na.exclude() %>% unique()
+upreg_PW2 <- pulldown_table$geneSymbol[pulldown_table$DEG_UP_PW2_padj < 0.05] %>% na.exclude() %>% unique()
+upreg_PW3 <- pulldown_table$geneSymbol[pulldown_table$DEG_UP_PW3_padj < 0.05] %>% na.exclude() %>% unique()
+
+downreg_all3 <- pulldown_table$geneSymbol[pulldown_table$DEG_DOWN_PW1_padj < 0.05 & pulldown_table$DEG_DOWN_PW2_padj < 0.05 & pulldown_table$DEG_DOWN_PW3_padj < 0.05] %>% na.exclude() %>% unique()
+downreg_PW1 <- pulldown_table$geneSymbol[pulldown_table$DEG_DOWN_PW1_padj < 0.05] %>% na.exclude() %>% unique()
+downreg_PW2 <- pulldown_table$geneSymbol[pulldown_table$DEG_DOWN_PW2_padj < 0.05] %>% na.exclude() %>% unique()
+downreg_PW3 <- pulldown_table$geneSymbol[pulldown_table$DEG_DOWN_PW3_padj < 0.05] %>% na.exclude() %>% unique()
+
+library(ggVennDiagram)
+
+ggVennDiagram(list(Pulldown=unique(pulldown_table$geneSymbol),
+                   PW1=upreg_PW1_all,
+                   PW2=upreg_PW2_all,
+                   PW3=upreg_PW3_all)) +
+  theme(legend.position = "none") +
+  ggtitle('Genes Upregulated in All 3 Samples (padj<0.05)', subtitle = '11916 Total Pulldown genes')
+ggVennDiagram(list(Pulldown=unique(pulldown_table$geneSymbol),
+                   PW1=downreg_PW1_all,
+                   PW2=downreg_PW2_all,
+                   PW3=downreg_PW3_all)) +
+  theme(legend.position = "none") +
+  ggtitle('Genes Downregulated in All 3 Samples (padj<0.05)', subtitle = '11916 Total Pulldown genes')
+
+# Percent of pulldown genes that show Differential Exon Usage or Significant IsoformSwitchAnalyzeR 
+
+isa_genes <- pulldown_table$geneSymbol[pulldown_table$ISA_qval < 0.05] %>% na.exclude() %>% unique()
+
+ggVennDiagram(list(Pulldown=unique(pulldown_table$geneSymbol),
+                   ISA=isa_genes)) +
+  theme(legend.position = "none") +
+  ggtitle('Genes with Significant ISA (padj<0.05)', subtitle = 'bottom text')
 
 
 
