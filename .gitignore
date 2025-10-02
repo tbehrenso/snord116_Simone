@@ -4,7 +4,7 @@
 *.bed
 *.RData
 *.pptx
-
+*.docx
 
 data/*
 DEXSeqReport/*
