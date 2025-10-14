@@ -5,6 +5,7 @@
 *.RData
 *.pptx
 *.docx
+*.sqlite
 
 data/*
 DEXSeqReport/*

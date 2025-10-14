@@ -284,9 +284,30 @@ ggVennDiagram(list(Pulldown=unique(pulldown_table$geneSymbol),
   ggtitle('Genes with Significant ISA (padj<0.05)', subtitle = 'bottom text')
 
 
+####
+#   Pie chart for Significant DEU
+####
+library(ggplot2)
 
+total_genes <- 59654
+p0.05 <- 4621
+p0.05_log2FC1 <- 665
 
+df <- data.frame(value = c(total_genes - p0.05 -p0.05_log2FC1, p0.05 - p0.05_log2FC1, p0.05_log2FC1),
+                 group = c('Non-significant', 'p < 0.05', 'p < 0.05 + |log2FC| > 1'))
 
+ggplot(df, aes(x = "", y = value, fill = group)) +
+  geom_col(color = "black") +
+  geom_text(aes(label = value),
+            position = position_stack(vjust = 0.5)) +
+  coord_polar(theta = "y") +
+  scale_fill_brewer() +
+  theme_void()
+  
+
+labels_with_values <- paste0(df$group, '\n', df$value)
+labels_with_percents <- paste0(df$group, '\n',round(df$value/sum(df$value), digits = 3))
+pie(c(total_genes - p0.05 -p0.05_log2FC1, p0.05 - p0.05_log2FC1, p0.05_log2FC1), labels_with_values)
 
 
 

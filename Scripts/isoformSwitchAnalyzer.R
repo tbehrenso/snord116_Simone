@@ -7,7 +7,7 @@ library(sva)
 # salmon_quant <- importIsoformExpression(parentDir = 'data/salmon_quants')
 
 # Import Kallisto Data
-kallisto_quant <- importIsoformExpression(parentDir = 'data/kallisto_quants_notDeep')
+kallisto_quant <- importIsoformExpression(parentDir = 'data/kallisto_quants')
 
 # Import subset of Kallisto Data
 kallisto_quant <- importIsoformExpression(parentDir = 'data/kallisto_quants_Gilmore_H9/')
@@ -56,11 +56,12 @@ aSwitchList <- importRdata(
   isoformCountMatrix   = kallisto_quant$counts,
   isoformRepExpression = kallisto_quant$abundance,
   designMatrix         = design_matrix,
-  isoformExonAnnoation = '/Users/tbehr/Desktop/gencode.v48.chr_patch_hapl_scaff.annotation.gtf.gz',
-  isoformNtFasta       = '/Users/tbehr/Desktop/gencode.v48.transcripts.fa.gz',
+  isoformExonAnnoation = 'data/reference/gencode.v48.chr_patch_hapl_scaff.annotation.gtf.gz',
+  isoformNtFasta       = 'data/reference/gencode.v48.transcripts.fa.gz',
   showProgress = FALSE,
   ignoreAfterPeriod = TRUE,
-  removeNonConvensionalChr = TRUE
+  removeNonConvensionalChr = TRUE,
+  addAnnotatedORFs = T                           ####### New Line to add ORFs in order to investigate NMD_status
 )
 
 # Filter
@@ -99,7 +100,7 @@ SwitchListAnalyzed <- analyzeAlternativeSplicing(
 table(SwitchListAnalyzed$AlternativeSplicingAnalysis$IR)
 
 ## Predict Switch Consequences
-consequencesOfInterest <- c('tss','tts','exon_number')
+consequencesOfInterest <- c('tss','tts','exon_number','NMD_status')
 SwitchListAnalyzed <- analyzeSwitchConsequences(
   SwitchListAnalyzed,
   consequencesToAnalyze = consequencesOfInterest, 
@@ -127,7 +128,7 @@ top_switches_extracted <- extractTopSwitches(
 
 subset(top_switches_extracted, gene_name=='KLF13')
 
-switchPlot(SwitchListAnalyzedSubset, gene = 'HCN1', additionalArguments = list(cex=1.5))
+switchPlot(SwitchListAnalyzedSubset, gene = 'BDP1', additionalArguments = list(cex=1.5))
 
 # View raw (?) transcript isoform counts
 SwitchListAnalyzed$isoformCountMatrix[SwitchListAnalyzed$isoformCountMatrix$isoform_id=='ENST00000307145',]

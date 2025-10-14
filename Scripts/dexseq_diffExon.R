@@ -69,7 +69,7 @@ dxd <- estimateExonFoldChanges(dxd, fitExpToVar = "condition")
 results <- DEXSeqResults(dxd)
 
 # count differentially expressed EXONS
-table(results$padj < 0.05 )
+table(results$padj < 0.05 & abs(results$log2fold_PW1_CTRL) > 1 )
 # count differentially affected genes
 table(tapply(results$padj < 0.1, results$groupID, any))
 
