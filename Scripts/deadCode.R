@@ -167,25 +167,93 @@ SYS5_reduced <- SYS5_differential[,c('SYMBOL','fold_enrichment')][1:30,]
 
 SYS5_reduced$Class <- NA
 
-SYS5_reduced$Class <- c('SNORD116','Protein-Coding','Protein-Coding','Protein-Coding','SCARNA','SNORD','Protein-Coding','RNA', 'snRNA', 'Protein-Coding',
-                        'snRNA', 'Protein-Coding', 'SCARNA', 'Protein-Coding', 'Protein-Coding', 'SNORD', 'Protein-Coding', 'Protein-Coding', 'Protein-Coding', 'snRNA',
-                        'SNORA','Protein-Coding','Protein-Coding','SNORA','SNORA','snRNA','Protein-Coding','snRNA','RNA','snRNA')
+SYS5_reduced$Class <- c('SNORD116','mRNA','mRNA','mRNA','SCARNA','SNORD','mRNA','RNA', 'snRNA', 'mRNA',
+                        'snRNA', 'mRNA', 'SCARNA', 'mRNA', 'mRNA', 'SNORD', 'mRNA', 'mRNA', 'mRNA', 'snRNA',
+                        'SNORA','mRNA','mRNA','SNORA','SNORA','snRNA','mRNA','snRNA','SNORA','snRNA')
 SYS5_reduced <- SYS5_reduced %>% 
   mutate(SYMBOL = make.unique(as.character(SYS5_reduced$SYMBOL)))
 
 # convert to ordered factor so ggplot doesn't sort x-values)
 SYS5_reduced$SYMBOL <- factor(SYS5_reduced$SYMBOL, levels = rev(SYS5_reduced$SYMBOL))
-
+SYS5_reduced$Class <- factor(SYS5_reduced$Class, levels = c('SNORD116','SNORD','SNORA','SCARNA','snRNA','RNA','mRNA'))
 
 ggplot(data = SYS5_reduced, aes(x=SYMBOL, y=fold_enrichment, fill=Class)) +
   geom_bar(stat='identity') +
   coord_flip() +
-  scale_fill_manual(values=c('darkgrey','#5B8496','#44B76B','#86ff37','#eac62d','#f76d1b','pink'))+
+  scale_fill_manual(values=c('#4352c4','#9e342c','#eac62d','#86ff37','#44B76B','#5B8496','darkgrey'))+
   theme_bw() +
   xlab('Gene Symbol') + ylab('Fold Enrichment') +
   labs(color='NEW LEGEND TITLE')
 
 
+# Alternate barplot that shows proportion of each gene class
+SYS5_reduced <- SYS5_differential[,c('SYMBOL','fold_enrichment')][1:100,]
+
+SYS5_reduced$Class <- NA
+
+SYS5_reduced$Class <- c('SNORD116','mRNA','mRNA','mRNA','SCARNA','SNORD','mRNA','RNA', 'snRNA', 'mRNA',
+                        'snRNA', 'mRNA', 'SCARNA', 'mRNA', 'mRNA', 'SNORD', 'mRNA', 'mRNA', 'mRNA', 'snRNA',
+                        'SNORA','mRNA','mRNA','SNORA','SNORA','snRNA','mRNA','snRNA','SNORA','snRNA',
+                        'snRNA', 'mRNA', 'mRNA', 'RNA', 'SCARNA', 'snRNA', 'mRNA', 'mRNA','mRNA','RNA',
+                        'SNORD','RNA','SCARNA','snRNA','RNA','SNORA','RNA','RNA','SNORA','mRNA',
+                        'SCARNA','mRNA','SNORA','mRNA','SNORA','RNA','RNA','mRNA','snRNA','snRNA',
+                        'mRNA','SCARNA','snRNA','snRNA','snRNA','SNORA','RNA','mRNA','mRNA','RNA',
+                        'SNORD','mRNA','snRNA','RNA','mRNA','mRNA','mRNA','mRNA','mRNA','mRNA',
+                        'RNA','mRNA','mRNA','RNA','RNA','SNORA','SNORA','mRNA','RNA','mRNA',
+                        'mRNA','SNORD','mRNA','mRNA','mRNA','mRNA','mRNA','mRNA','mRNA','RNA')
+
+class_proportions <- as.data.frame(table(SYS5_reduced$Class))
+class_proportions$Var1 <- factor(class_proportions$Var1, levels = rev(c('SNORD116','SNORD','SNORA','SCARNA','snRNA','RNA','mRNA')))
+
+ggplot(data = class_proportions, aes(x=Var1, y=Freq, fill=Var1)) +
+  geom_bar(stat='identity') +
+  coord_flip() +
+  scale_fill_manual(values=rev(c('#4352c4','#9e342c','#eac62d','#86ff37','#44B76B','#5B8496','darkgrey')))+
+  theme_bw() +
+  xlab('Gene Class') + ylab('Count') +
+  labs(color='NEW LEGEND TITLE')
+
+# -----------------------------------
+# Same plots as above, but filtering by snoGloBe scores
+# -----------------------------------
+SYS5_differential <- read_excel('data/ase1_to_peaks_complementarity_ALL.xlsx')
+
+SYS5_filtered <- SYS5_differential[!is.na(as.numeric(SYS5_differential$snoglobeScoreMax)),]
+
+SYS5_reduced <- SYS5_filtered[,c('geneSymbol','foldEnrichment','snoglobeScoreMax')][1:50,]
+
+SYS5_reduced$Class <- NA
+SYS5_reduced$Class <- c('SNORD116','mRNA','SCARNA','SNORD','snRNA','SNORD','mRNA','mRNA','mRNA','SNORA',
+                        'SNORA','SNORA','snRNA','SNORA','mRNA','RNA','SCARNA','RNA','SNORD','snRNA',
+                        'SNORA','mRNA','SNORA','RNA','snRNA','snRNA','mRNA','mRNA','mRNA','SNORA',
+                        'RNA','RNA','SNORD','mRNA','mRNA','mRNA','mRNA','mRNA','RNA','mRNA',
+                        'RNA','mRNA','mRNA','RNA','mRNA','SNORA','SNORA','mRNA','mRNA','mRNA')
+
+SYS5_reduced <- SYS5_reduced %>% 
+  mutate(geneSymbol = make.unique(as.character(SYS5_reduced$geneSymbol)))
+
+# convert to ordered factor so ggplot doesn't sort x-values)
+SYS5_reduced$geneSymbol <- factor(SYS5_reduced$geneSymbol, levels = rev(SYS5_reduced$geneSymbol))
+SYS5_reduced$Class <- factor(SYS5_reduced$Class, levels = c('SNORD116','SNORD','SNORA','SCARNA','snRNA','RNA','mRNA'))
+
+ggplot(data = SYS5_reduced[1:30,], aes(x=geneSymbol, y=foldEnrichment, fill=Class)) +
+  geom_bar(stat='identity') +
+  coord_flip() +
+  scale_fill_manual(values=c('#4352c4','#9e342c','#eac62d','#86ff37','#44B76B','#5B8496','darkgrey'))+
+  theme_bw() +
+  xlab('Gene Symbol') + ylab('Fold Enrichment') +
+  labs(color='NEW LEGEND TITLE')
+
+class_proportions <- as.data.frame(table(SYS5_reduced$Class))
+class_proportions$Var1 <- factor(class_proportions$Var1, levels = rev(c('SNORD116','SNORD','SNORA','SCARNA','snRNA','RNA','mRNA')))
+
+ggplot(data = class_proportions, aes(x=Var1, y=Freq, fill=Var1)) +
+  geom_bar(stat='identity') +
+  coord_flip() +
+  scale_fill_manual(values=rev(c('#4352c4','#9e342c','#eac62d','#86ff37','#44B76B','#5B8496','darkgrey')))+
+  theme_bw() +
+  xlab('Gene Class') + ylab('Count') +
+  labs(color='NEW LEGEND TITLE')
 
 ##########################################################
 #     Subset GTF for overlapping with peaks, for TSRexploreR
@@ -308,6 +376,62 @@ ggplot(df, aes(x = "", y = value, fill = group)) +
 labels_with_values <- paste0(df$group, '\n', df$value)
 labels_with_percents <- paste0(df$group, '\n',round(df$value/sum(df$value), digits = 3))
 pie(c(total_genes - p0.05 -p0.05_log2FC1, p0.05 - p0.05_log2FC1, p0.05_log2FC1), labels_with_values)
+
+
+####
+#   Convert Gm mouse genes to more useful names
+####
+
+library(biomaRt)
+
+gm_genes <- readClipboard()
+
+# Connect to Ensembl (use the appropriate release if needed)
+mart <- useMart("ensembl", dataset = "mmusculus_gene_ensembl")
+
+# Get mappings
+mapping <- getBM(
+  attributes = c("mgi_symbol", "external_gene_name", "description"),
+  filters = "mgi_symbol",
+  values = gm_genes,
+  mart = mart
+)
+
+print(mapping)
+
+
+
+
+####
+#   Convert ensembl to official gene name for results_df from DEXseq
+####
+library(biomaRt)
+
+# Example dataframe
+ensembl_genes <- results_df$groupID
+
+ensembl_genes <- sapply(strsplit(ensembl_genes, split = '\\.'), `[`, 1)
+
+results_df$groupID <- ensembl_genes
+
+# Connect to Ensembl
+ensembl <- useEnsembl(biomart = "genes", dataset = "hsapiens_gene_ensembl")
+
+# Get the mapping from Ensembl to HGNC symbol
+id_map <- getBM(
+  attributes = c("ensembl_gene_id", "hgnc_symbol"),
+  filters = "ensembl_gene_id",
+  values = ensembl_genes,
+  mart = ensembl
+)
+
+# Merge mapping with original dataframe
+df_merged <- merge(results_df, id_map, by.x = "groupID", by.y = "ensembl_gene_id", all.x = TRUE)
+
+na.exclude(df_merged$groupID[df_merged$padj<0.05])
+
+
+
 
 
 

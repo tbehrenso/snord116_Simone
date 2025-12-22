@@ -10,9 +10,9 @@ library(sva)
 kallisto_quant <- importIsoformExpression(parentDir = 'data/kallisto_quants')
 
 # Import subset of Kallisto Data
-kallisto_quant <- importIsoformExpression(parentDir = 'data/kallisto_quants_Gilmore_H9/')
+#kallisto_quant <- importIsoformExpression(parentDir = 'data/kallisto_quants_Gilmore_H9/')
 
-colnames(kallisto_quant[[1]])
+#colnames(kallisto_quant[[1]])
 
 # SVA Surrogate Variable Identification
 if(F){
@@ -126,9 +126,9 @@ top_switches_extracted <- extractTopSwitches(
   alpha = 0.5
 )
 
-subset(top_switches_extracted, gene_name=='KLF13')
+subset(top_switches_extracted, gene_name=='SYNE1')
 
-switchPlot(SwitchListAnalyzedSubset, gene = 'BDP1', additionalArguments = list(cex=1.5))
+switchPlot(SwitchListAnalyzedSubset, gene = 'CNKSR2', additionalArguments = list(cex=1.5))
 
 # View raw (?) transcript isoform counts
 SwitchListAnalyzed$isoformCountMatrix[SwitchListAnalyzed$isoformCountMatrix$isoform_id=='ENST00000307145',]

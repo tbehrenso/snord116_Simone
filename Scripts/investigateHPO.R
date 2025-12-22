@@ -15,7 +15,6 @@ ensembl_unique <- unique(res_sig$groupID)
 
 ensembl_unique_nodot <- sapply(strsplit(ensembl_unique, "\\."), `[`, 1)
 
-
 # Convert ensembl to NCBI IDs
 
 library(org.Hs.eg.db)
@@ -84,6 +83,28 @@ hpo_dotplot + theme(
   )
 ) + scale_y_discrete(labels=function(x) str_wrap(x, width=40))
 
+
+# Extract genes related to the important HPO terms
+
+intDisSev_genes <- strsplit(hpo_res$geneID[hpo_res$ID == 'HP:0010864'], split = '/')[[1]]
+delGroMotDev_genes <- strsplit(hpo_res$geneID[hpo_res$ID == 'HP:0002194'], split = '/')[[1]]
+ShoAttSpa_genes <- strsplit(hpo_res$geneID[hpo_res$ID == 'HP:0000736'], split = '/')[[1]]
+
+three_term_genes <- intersect(intersect(intDisSev_genes, delGroMotDev_genes), ShoAttSpa_genes)
+two_term_genes_a <- intersect(intDisSev_genes, delGroMotDev_genes)
+two_term_genes_a <- setdiff(two_term_genes_a, three_term_genes)
+two_term_genes_b <- intersect(intDisSev_genes, ShoAttSpa_genes)
+two_term_genes_b <- setdiff(two_term_genes_b, c(three_term_genes,two_term_genes_a))
+two_term_genes_c <- intersect(delGroMotDev_genes, ShoAttSpa_genes)
+two_term_genes_c <- setdiff(two_term_genes_c, c(three_term_genes,two_term_genes_a,two_term_genes_b))
+
+three_term_genes_ensembl <- names(genelist_ncbi[genelist_ncbi %in% three_term_genes])
+two_term_genes_a_ensembl <- names(genelist_ncbi[genelist_ncbi %in% two_term_genes_a])
+two_term_genes_b_ensembl <- names(genelist_ncbi[genelist_ncbi %in% two_term_genes_b])
+two_term_genes_c_ensembl <- names(genelist_ncbi[genelist_ncbi %in% two_term_genes_c])
+
+c('Intellectual disability, severe', 'Delayed gross motor development', 'Short attention span')
+c('HP:0010864','HP:0002194','HP:0000736')
 
 
 
