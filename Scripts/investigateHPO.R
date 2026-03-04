@@ -6,7 +6,7 @@ library(DBI)
 
 # Load dexseq results and extract gene list
 
-res <- readRDS('dexseq_results_saved.RData')
+res <- readRDS('/Users/tbehr/Desktop/SanRaffaele/Projects/snord116_Simone/OldMisc/dexseq_results_saved.RData')
 res <- res[!is.na(res$log2fold_PW1_CTRL) & !is.na(res$padj),]
 #res_sig <- res[res$padj < 0.05 & abs(res$log2fold_PW1_CTRL) > 1,]
 res_sig <- res[res$padj < 0.05,]
@@ -102,14 +102,10 @@ three_term_genes_ensembl <- names(genelist_ncbi[genelist_ncbi %in% three_term_ge
 two_term_genes_a_ensembl <- names(genelist_ncbi[genelist_ncbi %in% two_term_genes_a])
 two_term_genes_b_ensembl <- names(genelist_ncbi[genelist_ncbi %in% two_term_genes_b])
 two_term_genes_c_ensembl <- names(genelist_ncbi[genelist_ncbi %in% two_term_genes_c])
+two_term_genes_ensembl <- unique(c(two_term_genes_a_ensembl,two_term_genes_b_ensembl,two_term_genes_c_ensembl))
 
 c('Intellectual disability, severe', 'Delayed gross motor development', 'Short attention span')
 c('HP:0010864','HP:0002194','HP:0000736')
-
-
-
-
-
 
 
 
